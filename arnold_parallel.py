@@ -99,7 +99,7 @@ def worker(args):
     arnold_tongue_dict = {"Omega": [], "coupling_strength": [], "A_ext": [], "entrainment_value": [], "exception": []}
     
     for i in range(len(omega_list)):
-        for A_ext in A_ext_list:
+        for j, A_ext in enumerate(A_ext_list):
             oscillationer = 200
 
             simulation, _, _ = sim_onoff_nutlin(oscillationer, omega_list[i], A_ext)
@@ -131,7 +131,7 @@ def worker(args):
                     entrainment = tongue_value
             
             arnold_tongue_dict["Omega"].append(omega_list[i])
-            arnold_tongue_dict["coupling_strength"].append(coupling_strength_list[i])
+            arnold_tongue_dict["coupling_strength"].append(coupling_strength_list[j])
             arnold_tongue_dict["A_ext"].append(A_ext)
             arnold_tongue_dict["entrainment_value"].append(entrainment)
             arnold_tongue_dict["exception"].append(exception)
@@ -166,8 +166,8 @@ def save_data(data, filename):
         pickle.dump(data, f)
 
 if __name__ == "__main__":
-    antal_omegaer = 10
-    antal_A_ext = 10
+    antal_omegaer = 400
+    antal_A_ext = 400
 
     omega_list = np.array(np.linspace(0.01, 2.5, antal_omegaer))
     coupling_strengths = np.array(np.linspace(0.3, 5, antal_A_ext))
@@ -178,7 +178,7 @@ if __name__ == "__main__":
     print("Det ønskede antal simulationer er:", antal_simulationer_arnold)
     print("Key: ", resolution)
     
-    arnold_dict_parallel = arnold_tongue_simulering_parallel(omega_list, coupling_strengths, A_ext_list, 4)
+    arnold_dict_parallel = arnold_tongue_simulering_parallel(omega_list, coupling_strengths, A_ext_list, 10)
 
-    save_data(arnold_dict_parallel, 'arnold_sims/arnold_tongue_dict_latest.pkl.gz')
+    save_data(arnold_dict_parallel, 'arnold_sims/arnold_tongue_dict_huge.pkl.gz')
 
