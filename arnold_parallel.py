@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.signal import find_peaks
-from tqdm import tqdm
 from multiprocessing import Pool
 import pickle
 import gzip
@@ -95,10 +94,11 @@ def sim_onoff_nutlin(oscillationer, OOmega, A_ext):
 # Worker function to be executed by each process
 def worker(args):
     omega_list, coupling_strength_list, A_ext_list = args
-    all_tongues = [0.5, 1, 1.5, 2]
-    arnold_tongue_dict = {"Omega": [], "coupling_strength": [], "A_ext": [], "entrainment_value": [], "exception": []}
+    all_tongues = [0.5, 1, 1.5, 2, 2.5]
+    arnold_tongue_dict = {"Omega": [], "calculated_ratio": [], "coupling_strength": [], "A_ext": [], "entrainment_value": [], "exception": []}
     
     for i in range(len(omega_list)):
+        print(i)
         for j, A_ext in enumerate(A_ext_list):
             oscillationer = 200
 
@@ -121,7 +121,7 @@ def worker(args):
                 exception = True
 
             # We chose this as our accuracy to begin with, but it seems like we are getting results which resembles the ground "truth", so we are happy with it so far
-            rounded_ratio = np.round(Omega_ratio, 2)
+            rounded_ratio = np.round(Omega_ratio, 4)
 
             entrainment = 0 # Corresponds to no entrainment
 
@@ -133,6 +133,7 @@ def worker(args):
             arnold_tongue_dict["Omega"].append(omega_list[i])
             arnold_tongue_dict["coupling_strength"].append(coupling_strength_list[j])
             arnold_tongue_dict["A_ext"].append(A_ext)
+            arnold_tongue_dict["calculated_ratio"].append(Omega_ratio)
             arnold_tongue_dict["entrainment_value"].append(entrainment)
             arnold_tongue_dict["exception"].append(exception)
     
@@ -148,14 +149,15 @@ def arnold_tongue_simulering_parallel(omega_list, coupling_strength_list, A_ext_
     
     # Initialize multiprocessing pool and distribute the work
     with Pool(processes=num_processes) as pool:
-        results = list(tqdm(pool.imap(worker, args_list), total=len(omega_chunks)))
+        results = pool.map(worker, args_list)
     
     # Combine results from all processes
-    combined_result = {"Omega": [], "coupling_strength": [], "A_ext": [], "entrainment_value": [], "exception": []}
+    combined_result = {"Omega": [], "calculated_ratio": [], "coupling_strength": [], "A_ext": [], "entrainment_value": [], "exception": []}
     for result in results:
         combined_result["Omega"].extend(result["Omega"])
         combined_result["coupling_strength"].extend(result["coupling_strength"])
         combined_result["A_ext"].extend(result["A_ext"])
+        combined_result["calculated_ratio"].append(result["calculated_ratio"])
         combined_result["entrainment_value"].extend(result["entrainment_value"])
         combined_result["exception"].extend(result["exception"])
     
@@ -166,19 +168,15 @@ def save_data(data, filename):
         pickle.dump(data, f)
 
 if __name__ == "__main__":
-    antal_omegaer = 400
-    antal_A_ext = 400
+    antal_omegaer = 4
+    antal_A_ext = 4
 
-    omega_list = np.array(np.linspace(0.01, 2.5, antal_omegaer))
-    coupling_strengths = np.array(np.linspace(0.3, 5, antal_A_ext))
+    omega_list = np.array(np.linspace(0.01, 3, antal_omegaer))
+    coupling_strengths = np.array(np.linspace(0.1, 5, antal_A_ext))
     A_ext_list = coupling_strengths * A_int
-    resolution = f'{antal_omegaer}x{antal_A_ext}'
 
-    antal_simulationer_arnold = len(omega_list) * antal_A_ext
-    print("Det ønskede antal simulationer er:", antal_simulationer_arnold)
-    print("Key: ", resolution)
-    
-    arnold_dict_parallel = arnold_tongue_simulering_parallel(omega_list, coupling_strengths, A_ext_list, 10)
+    # DANGER - FOR RUNNING ON MODI MOUNT!
+    arnold_dict_parallel = arnold_tongue_simulering_parallel(omega_list, coupling_strengths, A_ext_list, 4)
 
-    save_data(arnold_dict_parallel, 'arnold_sims/arnold_tongue_dict_huge.pkl.gz')
+    save_data(arnold_dict_parallel, 'arnold_sims/arnold_tongue_dict.pkl.gz')
 
