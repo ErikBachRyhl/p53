@@ -98,7 +98,6 @@ def worker(args):
     arnold_tongue_dict = {"Omega": [], "calculated_ratio": [], "coupling_strength": [], "A_ext": [], "entrainment_value": [], "exception": []}
     
     for i in range(len(omega_list)):
-        print(i)
         for j, A_ext in enumerate(A_ext_list):
             oscillationer = 200
 
@@ -157,7 +156,7 @@ def arnold_tongue_simulering_parallel(omega_list, coupling_strength_list, A_ext_
         combined_result["Omega"].extend(result["Omega"])
         combined_result["coupling_strength"].extend(result["coupling_strength"])
         combined_result["A_ext"].extend(result["A_ext"])
-        combined_result["calculated_ratio"].append(result["calculated_ratio"])
+        combined_result["calculated_ratio"].extend(result["calculated_ratio"])
         combined_result["entrainment_value"].extend(result["entrainment_value"])
         combined_result["exception"].extend(result["exception"])
     
@@ -168,15 +167,15 @@ def save_data(data, filename):
         pickle.dump(data, f)
 
 if __name__ == "__main__":
-    antal_omegaer = 4
-    antal_A_ext = 4
+    antal_omegaer = 512
+    antal_A_ext = 512
 
     omega_list = np.array(np.linspace(0.01, 3, antal_omegaer))
     coupling_strengths = np.array(np.linspace(0.1, 5, antal_A_ext))
     A_ext_list = coupling_strengths * A_int
 
     # DANGER - FOR RUNNING ON MODI MOUNT!
-    arnold_dict_parallel = arnold_tongue_simulering_parallel(omega_list, coupling_strengths, A_ext_list, 4)
+    arnold_dict_parallel = arnold_tongue_simulering_parallel(omega_list, coupling_strengths, A_ext_list, 64)
 
-    save_data(arnold_dict_parallel, 'arnold_sims/arnold_tongue_dict.pkl.gz')
+    save_data(arnold_dict_parallel, f'arnold/arnold_tongue_dict{antal_omegaer}by{antal_A_ext}.pkl.gz')
 
