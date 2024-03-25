@@ -5,8 +5,6 @@ from multiprocessing import Pool
 import pickle
 import gzip
 
-from tqdm import tqdm
-
 # defining parameters from Krishna/Jensen
 
 k_Nin = 5.4 # min^{-1}
@@ -71,13 +69,13 @@ def TNF_sin_osc(oscillations, A_ext, OOmega):
 
     history = {"t":[] ,"N_n": [], "I_m": [], "I": [], "IKK_a":[], "IKK_i":[], "TNF":[]}
     
-    for i in tqdm(range(oscillations)):
+    for i in range(oscillations):
         if i == 0:
             state = x0
         else:
             state = history["N_n"][-1], history["I_m"][-1], history["I"][-1], history["IKK_a"][-1], history["IKK_i"][-1]
 
-        sys = solve_ivp(system_nfkb, (0, T_external), state, args=(A_ext, T_external,), method='LSODA', max_step=0.5, dense_output=True)
+        sys = solve_ivp(system_nfkb, (0, T_external), state, args=(A_ext, T_external,), method='LSODA', max_step=1.5, dense_output=True)
 
         N_n, I_m, I, IKK_a, IKK_i = sys["y"][0], sys["y"][1], sys["y"][2], sys["y"][3], sys["y"][4]
 
@@ -109,7 +107,7 @@ def worker(args):
             window_idx = peaks_external_idx[99]
 
             peaks_external = len(find_peaks(TNF_sim[window_idx:], height=np.mean(TNF_sim[window_idx:]))[0])
-            peaks_internal = len(find_peaks(N_n[window_idx:], height=np.mean(N_n[window_idx:]), prominence = 10)[0])
+            peaks_internal = len(find_peaks(N_n[window_idx:], height=np.mean(N_n[window_idx:]), prominence = 0.05)[0])
             
             Omega_ratio = 0
             exception = False
@@ -162,15 +160,14 @@ def save_data(data, filename):
         pickle.dump(data, f)
 
 if __name__ == "__main__":
-    antal_omegaer = 72
-    antal_A_ext = 24
+    antal_omegaer = 576
+    antal_A_ext = 576
 
-    # omega_list, _, _ = np.split(np.linspace(0.001, 3.5, antal_omegaer), 3)
     omega_list = np.linspace(0.001, 3.5, antal_omegaer)
 
-    coupling_strengths = np.linspace(0.001, 0.5, antal_A_ext)
+    _, coupling_strengths, _ = np.split(np.linspace(0.001, 3.8, antal_A_ext), 3)
 
     A_ext_list = coupling_strengths * A_int
-    arnold_dict_parallel = arnold_tongue_simulering_parallel(omega_list, coupling_strengths, A_ext_list, 4)
+    arnold_dict_parallel = arnold_tongue_simulering_parallel(omega_list, coupling_strengths, A_ext_list, 64)
 
-    save_data(arnold_dict_parallel, f'arnold/1_nfkb_{antal_omegaer}by{antal_A_ext}.pkl.gz')
+    save_data(arnold_dict_parallel, f'arnold/2_nfkb_{antal_omegaer}by{antal_A_ext}.pkl.gz')
