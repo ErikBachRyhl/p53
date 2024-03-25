@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --job-name P512_1
-#SBATCH --nodelist n003
+#SBATCH --nodelist n000
 #SBATCH --partition modi_short
 #SBATCH --ntasks 1
 #SBATCH --nodes 1
