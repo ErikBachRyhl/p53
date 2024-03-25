@@ -162,12 +162,13 @@ def save_data(data, filename):
         pickle.dump(data, f)
 
 if __name__ == "__main__":
-    antal_omegaer = 36
-    antal_A_ext = 12
+    antal_omegaer = 72
+    antal_A_ext = 24
 
+    # omega_list, _, _ = np.split(np.linspace(0.001, 3.5, antal_omegaer), 3)
     omega_list = np.linspace(0.001, 3.5, antal_omegaer)
 
-    coupling_strengths, _, _ = np.split(np.linspace(0.001, 0.5, antal_A_ext), 3)
+    coupling_strengths = np.linspace(0.001, 0.5, antal_A_ext)
 
     A_ext_list = coupling_strengths * A_int
     arnold_dict_parallel = arnold_tongue_simulering_parallel(omega_list, coupling_strengths, A_ext_list, 4)
